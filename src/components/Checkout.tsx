@@ -76,8 +76,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
 🛒 AmberKin ORDER
 
 ${customFieldsSection || `🎮 IGN: ${customFieldValues['ign'] || ''}`}
-${customFieldsSection ? '' : ''}
-${customFieldsSection ? `\n📝 Additional Information:\n${customFieldsSection}` : ''}
 
 📋 ORDER DETAILS:
 ${cartItems.map(item => {
