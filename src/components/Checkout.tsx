@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { CartItem, PaymentMethod, CustomField } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
+import { useImageUpload } from '../hooks/useImageUpload';
 
 interface CheckoutProps {
   cartItems: CartItem[];
@@ -11,9 +12,14 @@ interface CheckoutProps {
 
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) => {
   const { paymentMethods } = usePaymentMethods();
+  const { uploadImage, uploading: uploadingReceipt } = useImageUpload();
   const [step, setStep] = useState<'details' | 'payment'>('details');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('gcash');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
 
   // Collect all unique custom fields from cart items
   // If any game has custom fields, show those. Otherwise, show default "IGN" field
@@ -63,7 +69,42 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
     setStep('payment');
   };
 
+  const handleReceiptUpload = async (file: File) => {
+    try {
+      setReceiptError(null);
+      setReceiptFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setReceiptPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to Supabase
+      const url = await uploadImage(file, 'payment-receipts');
+      setReceiptImageUrl(url);
+    } catch (error) {
+      console.error('Error uploading receipt:', error);
+      setReceiptError(error instanceof Error ? error.message : 'Failed to upload receipt');
+      setReceiptFile(null);
+      setReceiptPreview(null);
+    }
+  };
+
+  const handleReceiptRemove = () => {
+    setReceiptFile(null);
+    setReceiptImageUrl(null);
+    setReceiptPreview(null);
+    setReceiptError(null);
+  };
+
   const handlePlaceOrder = () => {
+    if (!receiptImageUrl) {
+      setReceiptError('Please upload your payment receipt before placing the order');
+      return;
+    }
+
     // Build custom fields section
     const customFieldsSection = customFields.length > 0 
       ? customFields.map(field => {
@@ -97,7 +138,8 @@ ${cartItems.map(item => {
 💰 TOTAL: ₱${totalPrice}
 
 💳 Payment: ${selectedPaymentMethod?.name || paymentMethod}
-📸 Payment Screenshot: Please attach your payment receipt screenshot
+📸 Payment Receipt: ${receiptImageUrl}
+Please also attach the screenshot in Messenger for verification.
 
 Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
     `.trim();
@@ -273,7 +315,7 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
           <div className="glass border border-cafe-primary/30 rounded-lg p-4">
             <h4 className="font-medium text-cafe-text mb-2">📸 Payment Proof Required</h4>
             <p className="text-sm text-cafe-textMuted">
-              After making your payment, please take a screenshot of your payment receipt and attach it when you send your order via Messenger. This helps us verify and process your order quickly.
+              After making your payment, please upload a screenshot of your payment receipt below. This helps us verify and process your order quickly.
             </p>
           </div>
         </div>
@@ -325,16 +367,94 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
             </div>
           </div>
 
+          {/* Receipt Upload Section */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-cafe-text mb-2">
+              Payment Receipt <span className="text-red-400">*</span>
+            </label>
+            
+            {!receiptPreview ? (
+              <div className="glass border-2 border-dashed border-cafe-primary/30 rounded-lg p-6 text-center hover:border-cafe-primary transition-colors duration-200">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleReceiptUpload(file);
+                    }
+                  }}
+                  className="hidden"
+                  id="receipt-upload"
+                  disabled={uploadingReceipt}
+                />
+                <label
+                  htmlFor="receipt-upload"
+                  className={`cursor-pointer flex flex-col items-center space-y-2 ${uploadingReceipt ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {uploadingReceipt ? (
+                    <>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cafe-primary"></div>
+                      <span className="text-sm text-cafe-textMuted">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-cafe-primary" />
+                      <span className="text-sm text-cafe-text">Click to upload receipt</span>
+                      <span className="text-xs text-cafe-textMuted">JPEG, PNG, WebP, or GIF (Max 5MB)</span>
+                    </>
+                  )}
+                </label>
+              </div>
+            ) : (
+              <div className="relative glass border border-cafe-primary/30 rounded-lg p-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      className="w-20 h-20 object-cover rounded-lg border border-cafe-primary/30"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-cafe-text truncate">
+                      {receiptFile?.name || 'Receipt uploaded'}
+                    </p>
+                    <p className="text-xs text-cafe-textMuted">
+                      {receiptImageUrl ? '✓ Uploaded successfully' : 'Uploading...'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReceiptRemove}
+                    className="flex-shrink-0 p-2 glass-strong rounded-lg hover:bg-red-500/20 transition-colors duration-200"
+                    disabled={uploadingReceipt}
+                  >
+                    <X className="h-4 w-4 text-cafe-text" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {receiptError && (
+              <p className="mt-2 text-sm text-red-400">{receiptError}</p>
+            )}
+          </div>
+
           <button
             onClick={handlePlaceOrder}
-            className="w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform text-white hover:opacity-90 hover:scale-[1.02]"
-            style={{ backgroundColor: '#1E7ACB' }}
+            disabled={!receiptImageUrl || uploadingReceipt}
+            className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
+              receiptImageUrl && !uploadingReceipt
+                ? 'text-white hover:opacity-90 hover:scale-[1.02]'
+                : 'glass text-cafe-textMuted cursor-not-allowed'
+            }`}
+            style={receiptImageUrl && !uploadingReceipt ? { backgroundColor: '#1E7ACB' } : {}}
           >
-            Place Order via Messenger
+            {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
           </button>
           
           <p className="text-xs text-cafe-textMuted text-center mt-3">
-            You'll be redirected to Facebook Messenger to confirm your order. Don't forget to attach your payment screenshot!
+            You'll be redirected to Facebook Messenger to confirm your order. Your receipt has been uploaded and will be included in the message.
           </p>
         </div>
       </div>

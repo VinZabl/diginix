@@ -5,7 +5,7 @@ export const useImageUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (file: File, bucket: string = 'menu-images'): Promise<string> => {
     try {
       setUploading(true);
       setUploadProgress(0);
@@ -24,7 +24,10 @@ export const useImageUpload = () => {
 
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const prefix = bucket === 'payment-receipts' ? 'receipt' : '';
+      const fileName = prefix 
+        ? `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+        : `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -39,7 +42,7 @@ export const useImageUpload = () => {
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
-        .from('menu-images')
+        .from(bucket)
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false,
@@ -55,7 +58,7 @@ export const useImageUpload = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('menu-images')
+        .from(bucket)
         .getPublicUrl(data.path);
 
       return publicUrl;
@@ -68,14 +71,14 @@ export const useImageUpload = () => {
     }
   };
 
-  const deleteImage = async (imageUrl: string): Promise<void> => {
+  const deleteImage = async (imageUrl: string, bucket: string = 'menu-images'): Promise<void> => {
     try {
       // Extract file path from URL
       const urlParts = imageUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
 
       const { error } = await supabase.storage
-        .from('menu-images')
+        .from(bucket)
         .remove([fileName]);
 
       if (error) {

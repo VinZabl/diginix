@@ -25,8 +25,7 @@ export const useSiteSettings = () => {
         site_logo: data.find(s => s.id === 'site_logo')?.value || '/logo.png',
         site_description: data.find(s => s.id === 'site_description')?.value || 'Welcome to AmberKin x GamerXtream — Your perfect game credits destination',
         currency: data.find(s => s.id === 'currency')?.value || '₱',
-        currency_code: data.find(s => s.id === 'currency_code')?.value || 'PHP',
-        delivery_enabled: data.find(s => s.id === 'delivery_enabled')?.value || 'true'
+        currency_code: data.find(s => s.id === 'currency_code')?.value || 'PHP'
       };
 
       setSiteSettings(settings);

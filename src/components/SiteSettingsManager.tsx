@@ -11,8 +11,7 @@ const SiteSettingsManager: React.FC = () => {
     site_name: '',
     site_description: '',
     currency: '',
-    currency_code: '',
-    delivery_enabled: 'true'
+    currency_code: ''
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
@@ -23,8 +22,7 @@ const SiteSettingsManager: React.FC = () => {
         site_name: siteSettings.site_name,
         site_description: siteSettings.site_description,
         currency: siteSettings.currency,
-        currency_code: siteSettings.currency_code,
-        delivery_enabled: siteSettings.delivery_enabled
+        currency_code: siteSettings.currency_code
       });
       setLogoPreview(siteSettings.site_logo);
     }
@@ -66,8 +64,7 @@ const SiteSettingsManager: React.FC = () => {
         site_description: formData.site_description,
         currency: formData.currency,
         currency_code: formData.currency_code,
-        site_logo: logoUrl,
-        delivery_enabled: formData.delivery_enabled
+        site_logo: logoUrl
       });
 
       setIsEditing(false);
@@ -83,8 +80,7 @@ const SiteSettingsManager: React.FC = () => {
         site_name: siteSettings.site_name,
         site_description: siteSettings.site_description,
         currency: siteSettings.currency,
-        currency_code: siteSettings.currency_code,
-        delivery_enabled: siteSettings.delivery_enabled
+        currency_code: siteSettings.currency_code
       });
       setLogoPreview(siteSettings.site_logo);
     }
@@ -251,49 +247,6 @@ const SiteSettingsManager: React.FC = () => {
               />
             ) : (
               <p className="text-lg font-medium text-black">{siteSettings?.currency_code}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Service Options */}
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Service Options</h3>
-          
-          {/* Delivery Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                🛵 Delivery Service
-              </label>
-              <p className="text-xs text-gray-500">
-                Enable or disable delivery option for customers
-              </p>
-            </div>
-            {isEditing ? (
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({
-                  ...prev,
-                  delivery_enabled: prev.delivery_enabled === 'true' ? 'false' : 'true'
-                }))}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                  formData.delivery_enabled === 'true' ? 'bg-green-600' : 'bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-200 ${
-                    formData.delivery_enabled === 'true' ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            ) : (
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                siteSettings?.delivery_enabled === 'true' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {siteSettings?.delivery_enabled === 'true' ? 'Enabled' : 'Disabled'}
-              </span>
             )}
           </div>
         </div>

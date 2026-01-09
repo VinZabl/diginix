@@ -4,3 +4,4 @@
 ALTER TABLE menu_items
 ALTER COLUMN description DROP NOT NULL;
 
+

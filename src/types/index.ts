@@ -85,5 +85,4 @@ export interface SiteSettings {
   site_description: string;
   currency: string;
   currency_code: string;
-  delivery_enabled: string; // 'true' or 'false' as string (stored in DB)
 }
