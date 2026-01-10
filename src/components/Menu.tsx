@@ -19,9 +19,10 @@ interface MenuProps {
   cartItems: CartItem[];
   updateQuantity: (id: string, quantity: number) => void;
   selectedCategory: string;
+  onItemAdded?: () => void; // Callback when item is added from modal
 }
 
-const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuantity, selectedCategory }) => {
+const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuantity, selectedCategory, onItemAdded }) => {
   const { categories } = useCategories();
   const [activeCategory, setActiveCategory] = React.useState('hot-coffee');
 
@@ -135,6 +136,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
                         }
                       }
                     }}
+                    onItemAdded={onItemAdded}
                   />
                 );
               })}

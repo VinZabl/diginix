@@ -7,13 +7,15 @@ interface MenuItemCardProps {
   onAddToCart: (item: MenuItem, quantity?: number, variation?: Variation) => void;
   quantity: number;
   onUpdateQuantity: (id: string, quantity: number) => void;
+  onItemAdded?: () => void; // Callback when item is added to cart
 }
 
 const MenuItemCard: React.FC<MenuItemCardProps> = ({ 
   item, 
   onAddToCart, 
   quantity, 
-  onUpdateQuantity 
+  onUpdateQuantity,
+  onItemAdded
 }) => {
   const [showCustomization, setShowCustomization] = useState(false);
   const [selectedVariation, setSelectedVariation] = useState<Variation | undefined>(
@@ -39,6 +41,10 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     onAddToCart(item, 1, variation || selectedVariation);
     setShowCustomization(false);
     setSelectedVariation(item.variations?.[0]);
+    // Call the callback to redirect to cart after adding item
+    if (onItemAdded) {
+      onItemAdded();
+    }
   };
 
   // Check if text overflows and needs scrolling

@@ -24,6 +24,12 @@ function MainApp() {
     setSelectedCategory(categoryId);
   };
 
+  // Handler for when item is added from package selection modal
+  const handleItemAdded = React.useCallback(() => {
+    // Redirect to cart view after adding item from modal
+    setCurrentView('cart');
+  }, []);
+
   // Filter menu items based on selected category
   const filteredMenuItems = selectedCategory === 'all' 
     ? menuItems 
@@ -47,6 +53,7 @@ function MainApp() {
           cartItems={cart.cartItems}
           updateQuantity={cart.updateQuantity}
           selectedCategory={selectedCategory}
+          onItemAdded={handleItemAdded}
         />
       )}
       

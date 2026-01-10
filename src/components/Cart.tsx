@@ -125,13 +125,22 @@ const Cart: React.FC<CartProps> = ({
           <span className="text-white">₱{(getTotalPrice() || 0).toFixed(2)}</span>
         </div>
         
-        <button
-          onClick={onCheckout}
-          className="w-full text-white py-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] font-medium text-lg"
-          style={{ backgroundColor: '#1E7ACB' }}
-        >
-          Proceed to Checkout
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={onContinueShopping}
+            className="flex-1 text-white py-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] font-medium text-lg border-2 border-white/30"
+            style={{ backgroundColor: 'transparent' }}
+          >
+            Add More
+          </button>
+          <button
+            onClick={onCheckout}
+            className="flex-1 text-white py-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] font-medium text-lg"
+            style={{ backgroundColor: '#1E7ACB' }}
+          >
+            Continue to Checkout
+          </button>
+        </div>
       </div>
     </div>
   );
