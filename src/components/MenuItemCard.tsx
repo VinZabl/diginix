@@ -73,7 +73,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     <>
       <div 
         onClick={handleCardClick}
-        className={`flex flex-row items-center transition-all duration-300 group rounded-xl p-3 gap-3 ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`flex flex-row items-center transition-all duration-300 group rounded-xl p-2 gap-2 ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
         style={{
           background: '#1E7ACB',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
@@ -83,7 +83,6 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
             e.currentTarget.style.backdropFilter = 'blur(16px)';
             e.currentTarget.style.webkitBackdropFilter = 'blur(16px)';
-            e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.3)';
             e.currentTarget.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
           }
         }}
@@ -92,13 +91,12 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             e.currentTarget.style.background = '#1E7ACB';
             e.currentTarget.style.backdropFilter = 'none';
             e.currentTarget.style.webkitBackdropFilter = 'none';
-            e.currentTarget.style.border = 'none';
             e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
           }
         }}
       >
         {/* Square Game Icon on Left */}
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
+        <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
           {item.image ? (
             <img
               src={item.image}
@@ -138,9 +136,9 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
               item.name
             )}
           </h4>
-          {item.variations && item.variations.length > 0 && (
+          {item.subtitle && (
             <p className="text-xs sm:text-sm text-gray-300">
-              {item.variations.length} package{item.variations.length > 1 ? 's' : ''} available
+              {item.subtitle}
             </p>
           )}
         </div>
@@ -161,7 +159,12 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             >
               <div>
                 <h3 className="text-xl font-bold text-white">{item.name}</h3>
-                <p className="text-sm text-white/80 mt-1">Select an item to add to cart</p>
+                {item.subtitle && (
+                  <p className="text-sm text-white/90 mt-1">{item.subtitle}</p>
+                )}
+                {item.description && (
+                  <p className="text-sm text-white/90 mt-2">{item.description}</p>
+                )}
               </div>
               <button
                 onClick={() => setShowCustomization(false)}
@@ -183,64 +186,121 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
               <div
                 className="sticky top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
-                  height: '56px',
-                  background: 'linear-gradient(to bottom, #0066CC 0%, rgba(0, 102, 204, 0.99) 10%, rgba(0, 102, 204, 0.95) 25%, rgba(0, 102, 204, 0.85) 45%, rgba(0, 102, 204, 0.5) 70%, rgba(0, 102, 204, 0.1) 90%, transparent 100%)',
-                  marginBottom: '-56px'
+                  height: '32px',
+                  background: 'linear-gradient(to bottom, #0066CC 0%, rgba(0, 102, 204, 0.98) 20%, rgba(0, 102, 204, 0.7) 50%, rgba(0, 102, 204, 0.2) 80%, transparent 100%)',
+                  marginBottom: '-32px'
                 }}
               />
               
-              <div className="p-6" style={{ paddingTop: 'calc(1.5rem + 56px)' }}>
-                {/* Show currency packages as selectable items in grid */}
+              <div className="p-6 pt-4">
+                {/* Show currency packages grouped by category */}
                 {item.variations && item.variations.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
-                  {item.variations.map((variation) => {
-                    const originalPrice = variation.price;
-                    const discountedPrice = getDiscountedPrice(originalPrice);
-                    const isDiscounted = item.isOnDiscount && item.discountPercentage !== undefined;
-                    
+                  (() => {
+                    // Group variations by category and track category sort order
+                    const groupedByCategory: Record<string, { variations: Variation[], categorySort: number }> = {};
+                    item.variations.forEach((variation) => {
+                      const category = variation.category || 'Uncategorized';
+                      const categorySort = variation.sort !== null && variation.sort !== undefined ? variation.sort : 999;
+                      
+                      if (!groupedByCategory[category]) {
+                        groupedByCategory[category] = { variations: [], categorySort: 999 };
+                      }
+                      groupedByCategory[category].variations.push(variation);
+                      // Use the minimum sort value as the category sort order
+                      if (categorySort < groupedByCategory[category].categorySort) {
+                        groupedByCategory[category].categorySort = categorySort;
+                      }
+                    });
+
+                    // Sort categories by category sort order (sort field), then alphabetically
+                    const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+                      const sortA = groupedByCategory[a].categorySort;
+                      const sortB = groupedByCategory[b].categorySort;
+                      if (sortA !== sortB) {
+                        return sortA - sortB;
+                      }
+                      return a.localeCompare(b);
+                    });
+
+                    // Sort variations within each category by sort_order, then by price
+                    sortedCategories.forEach((category) => {
+                      groupedByCategory[category].variations.sort((a, b) => {
+                        const sortOrderA = a.sort_order || 0;
+                        const sortOrderB = b.sort_order || 0;
+                        if (sortOrderA !== sortOrderB) {
+                          return sortOrderA - sortOrderB;
+                        }
+                        return a.price - b.price;
+                      });
+                    });
+
                     return (
-                      <button
-                        key={variation.id}
-                        onClick={() => handleItemSelect(variation)}
-                        className="bg-white rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover"
-                        style={{
-                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                        }}
-                      >
-                        <div className="flex flex-col">
-                          <div className="font-semibold text-gray-900 text-sm mb-1">
-                            {variation.name}
-                          </div>
-                          {variation.description && (
-                            <div className="text-xs text-gray-600 mb-2 line-clamp-2">
-                              {variation.description}
+                      <div className="space-y-6">
+                        {sortedCategories.map((category, categoryIndex) => (
+                          <div key={category}>
+                            {/* Category Header */}
+                            <h4 className="text-lg font-bold text-white mb-3">{category}</h4>
+                            
+                            {/* Packages Grid */}
+                            <div className="grid grid-cols-2 gap-3">
+                              {groupedByCategory[category].variations.map((variation) => {
+                                const originalPrice = variation.price;
+                                const discountedPrice = getDiscountedPrice(originalPrice);
+                                const isDiscounted = item.isOnDiscount && item.discountPercentage !== undefined;
+                                
+                                return (
+                                  <button
+                                    key={variation.id}
+                                    onClick={() => handleItemSelect(variation)}
+                                    className="bg-white rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover"
+                                    style={{
+                                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                  >
+                                    <div className="flex flex-col">
+                                      <div className="font-semibold text-gray-900 text-sm mb-1">
+                                        {variation.name}
+                                      </div>
+                                      {variation.description && (
+                                        <div className="text-xs text-gray-600 mb-2 line-clamp-2">
+                                          {variation.description}
+                                        </div>
+                                      )}
+                                      <div className="mt-auto">
+                                        <div className="text-base font-bold text-gray-900">
+                                          ₱{discountedPrice.toFixed(2)}
+                                        </div>
+                                        {isDiscounted && (
+                                          <div className="flex items-center gap-2 mt-1">
+                                            <div className="text-xs text-gray-500 line-through">
+                                              ₱{originalPrice.toFixed(2)}
+                                            </div>
+                                            <div className="text-xs text-gray-900 font-semibold">
+                                              -{item.discountPercentage}%
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
-                          )}
-                          <div className="mt-auto">
-                            <div className="text-base font-bold text-gray-900">
-                              ₱{discountedPrice.toFixed(2)}
-                            </div>
-                            {isDiscounted && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <div className="text-xs text-gray-500 line-through">
-                                  ₱{originalPrice.toFixed(2)}
-                                </div>
-                                <div className="text-xs text-gray-900 font-semibold">
-                                  -{item.discountPercentage}%
-                                </div>
-                              </div>
+
+                            {/* Divider between categories */}
+                            {categoryIndex < sortedCategories.length - 1 && (
+                              <div className="border-t border-white/20 my-4"></div>
                             )}
                           </div>
-                        </div>
-                      </button>
+                        ))}
+                      </div>
                     );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-white/80">
-                  No currency packages available
-                </div>
-              )}
+                  })()
+                ) : (
+                  <div className="text-center py-8 text-white/80">
+                    No currency packages available
+                  </div>
+                )}
               </div>
             </div>
           </div>

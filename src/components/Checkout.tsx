@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Upload, X, Copy, Check } from 'lucide-react';
-import { CartItem, PaymentMethod } from '../types';
+import React, { useState, useMemo, useRef } from 'react';
+import { ArrowLeft, Upload, X, Copy, Check, MousePointerClick, ChevronUp } from 'lucide-react';
+import { CartItem, PaymentMethod, CustomField } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { useImageUpload } from '../hooks/useImageUpload';
 
@@ -14,13 +14,18 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
   const { paymentMethods } = usePaymentMethods();
   const { uploadImage, uploading: uploadingReceipt } = useImageUpload();
   const [step, setStep] = useState<'details' | 'payment'>('details');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('gcash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const paymentDetailsRef = useRef<HTMLDivElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [bulkInputValues, setBulkInputValues] = useState<Record<string, string>>({});
+  const [bulkSelectedGames, setBulkSelectedGames] = useState<string[]>([]);
 
   // Group custom fields by item/game
   // If any game has custom fields, show those grouped by game. Otherwise, show default "IGN" field
@@ -39,19 +44,126 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
 
   const hasAnyCustomFields = itemsWithCustomFields.length > 0;
 
+  // Get bulk input fields based on selected games - position-based
+  // If selected games have N fields, show N bulk input fields
+  const bulkInputFields = useMemo(() => {
+    if (bulkSelectedGames.length === 0) return [];
+    
+    // Get all selected items
+    const selectedItems = itemsWithCustomFields.filter(item => 
+      bulkSelectedGames.includes(item.id)
+    );
+    
+    if (selectedItems.length === 0) return [];
+    
+    // Find the maximum number of fields across all selected games
+    const maxFields = Math.max(...selectedItems.map(item => item.customFields?.length || 0));
+    
+    if (maxFields === 0) return [];
+    
+    // Create fields array based on position (index)
+    // Use the first selected item's fields as reference for labels
+    const referenceItem = selectedItems[0];
+    const fields: Array<{ index: number, field: CustomField | null }> = [];
+    
+    for (let i = 0; i < maxFields; i++) {
+      // Try to get field from reference item, or use a placeholder
+      const field = referenceItem.customFields?.[i] || null;
+      fields.push({ index: i, field });
+    }
+    
+    return fields;
+  }, [bulkSelectedGames, itemsWithCustomFields]);
+
+  // Sync bulk input values to selected games by position
+  React.useEffect(() => {
+    if (bulkSelectedGames.length === 0) return;
+    
+    const updates: Record<string, string> = {};
+    
+    // Get selected items
+    const selectedItems = itemsWithCustomFields.filter(item => 
+      bulkSelectedGames.includes(item.id)
+    );
+    
+    // For each bulk input field (by index)
+    Object.entries(bulkInputValues).forEach(([fieldIndexStr, value]) => {
+      const fieldIndex = parseInt(fieldIndexStr, 10);
+      
+      // Apply to all selected games at the same field position
+      selectedItems.forEach(item => {
+        if (item.customFields && item.customFields[fieldIndex]) {
+          const field = item.customFields[fieldIndex];
+          const valueKey = `${item.id}_${field.key}`;
+          updates[valueKey] = value;
+        }
+      });
+    });
+    
+    if (Object.keys(updates).length > 0) {
+      setCustomFieldValues(prev => ({ ...prev, ...updates }));
+    }
+  }, [bulkInputValues, bulkSelectedGames, itemsWithCustomFields]);
+
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
-  // Set default payment method when payment methods are loaded
+  // Auto-scroll to payment details when payment method is selected
   React.useEffect(() => {
-    if (paymentMethods.length > 0 && !paymentMethod) {
-      setPaymentMethod((paymentMethods[0].id as PaymentMethod) || 'gcash');
+    if (paymentMethod && paymentDetailsRef.current) {
+      setShowScrollIndicator(true); // Reset to show indicator when payment method is selected
+      setTimeout(() => {
+        paymentDetailsRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
     }
-  }, [paymentMethods, paymentMethod]);
+  }, [paymentMethod]);
+
+  // Check if buttons section is visible to hide scroll indicator
+  React.useEffect(() => {
+    if (!buttonsRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // If buttons are visible, hide the scroll indicator
+          if (entry.isIntersecting) {
+            setShowScrollIndicator(false);
+          } else {
+            setShowScrollIndicator(true);
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the element is visible
+        rootMargin: '-50px 0px' // Add some margin to trigger earlier
+      }
+    );
+
+    observer.observe(buttonsRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [step]);
 
   const selectedPaymentMethod = paymentMethods.find(method => method.id === paymentMethod);
   
+  const handleBulkInputChange = (fieldKey: string, value: string) => {
+    setBulkInputValues(prev => ({ ...prev, [fieldKey]: value }));
+  };
+
+  const handleBulkGameSelectionChange = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setBulkSelectedGames(prev => [...prev, itemId]);
+    } else {
+      setBulkSelectedGames(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
   const handleProceedToPayment = () => {
     setStep('payment');
   };
@@ -91,17 +203,54 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
     // Build custom fields section grouped by game
     let customFieldsSection = '';
     if (hasAnyCustomFields) {
-      const fieldsByGame = itemsWithCustomFields.map(item => {
+      // Group games by their field values (to simplify when bulk input is used)
+      const gamesByFieldValues = new Map<string, { games: string[], fields: Array<{ label: string, value: string }> }>();
+      
+      itemsWithCustomFields.forEach(item => {
+        // Get all field values for this game
         const fields = item.customFields?.map(field => {
           const valueKey = `${item.id}_${field.key}`;
           const value = customFieldValues[valueKey] || '';
-          return value ? `${field.label}: ${value}` : null;
-        }).filter(Boolean).join('\n');
-        return fields ? `${item.name}\n${fields}` : null;
-      }).filter(Boolean).join('\n\n');
+          return value ? { label: field.label, value } : null;
+        }).filter(Boolean) as Array<{ label: string, value: string }> || [];
+        
+        if (fields.length === 0) return;
+        
+        // Create a key based on field values (to group games with same values)
+        const valueKey = fields.map(f => `${f.label}:${f.value}`).join('|');
+        
+        if (!gamesByFieldValues.has(valueKey)) {
+          gamesByFieldValues.set(valueKey, { games: [], fields });
+        }
+        gamesByFieldValues.get(valueKey)!.games.push(item.name);
+      });
       
-      if (fieldsByGame) {
-        customFieldsSection = fieldsByGame;
+      // Build the section
+      const sections: string[] = [];
+      gamesByFieldValues.forEach(({ games, fields }) => {
+        if (games.length === 0 || fields.length === 0) return;
+        
+        // Add game names
+        sections.push(games.join('\n'));
+        
+        // If all values are the same, combine into one line
+        const allValuesSame = fields.every(f => f.value === fields[0].value);
+        if (allValuesSame && fields.length > 1) {
+          const labels = fields.map(f => f.label).join(', ');
+          const lastCommaIndex = labels.lastIndexOf(',');
+          const combinedLabels = lastCommaIndex > 0 
+            ? labels.substring(0, lastCommaIndex) + ' &' + labels.substring(lastCommaIndex + 1)
+            : labels;
+          sections.push(`${combinedLabels}: ${fields[0].value}`);
+        } else {
+          // Different values, show each field separately
+          const fieldStrings = fields.map(f => `${f.label}: ${f.value}`).join(', ');
+          sections.push(fieldStrings);
+        }
+      });
+      
+      if (sections.length > 0) {
+        customFieldsSection = sections.join('\n');
       }
     } else {
       customFieldsSection = `🎮 IGN: ${customFieldValues['default_ign'] || ''}`;
@@ -124,7 +273,7 @@ ${cartItems.map(item => {
 
 💰 TOTAL: ₱${totalPrice}
 
-💳 Payment: ${selectedPaymentMethod?.name || paymentMethod}
+💳 Payment: ${selectedPaymentMethod?.name || ''}
 
 📸 Payment Receipt: ${receiptImageUrl || ''}
 
@@ -146,6 +295,11 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
   };
 
   const handlePlaceOrder = () => {
+    if (!paymentMethod) {
+      setReceiptError('Please select a payment method');
+      return;
+    }
+    
     if (!receiptImageUrl) {
       setReceiptError('Please upload your payment receipt before placing the order');
       return;
@@ -202,6 +356,57 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
                   <p className="text-sm text-blue-800">
                     <span className="font-semibold">{itemsWithCustomFields.length}</span> game{itemsWithCustomFields.length > 1 ? 's' : ''} require{itemsWithCustomFields.length === 1 ? 's' : ''} additional information
                   </p>
+                </div>
+              )}
+
+              {/* Bulk Input Section */}
+              {itemsWithCustomFields.length >= 2 && (
+                <div className="mb-6 p-4 glass-strong border border-cafe-primary/30 rounded-lg">
+                  <h3 className="text-lg font-semibold text-cafe-text mb-4">Bulk Input</h3>
+                  <p className="text-sm text-cafe-textMuted mb-4">
+                    Select games and fill fields once for all selected games.
+                  </p>
+                  
+                  {/* Game Selection Checkboxes */}
+                  <div className="space-y-2 mb-4">
+                    {itemsWithCustomFields.map((item) => {
+                      const isSelected = bulkSelectedGames.includes(item.id);
+                      return (
+                        <label
+                          key={item.id}
+                          className="flex items-center space-x-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleBulkGameSelectionChange(item.id, e.target.checked)}
+                            className="w-4 h-4 text-cafe-primary border-cafe-primary/30 rounded focus:ring-cafe-primary"
+                          />
+                          <span className="text-sm text-cafe-text">{item.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Input Fields - Only show if games are selected */}
+                  {bulkSelectedGames.length > 0 && bulkInputFields.length > 0 && (
+                    <div className="space-y-4 mt-4 pt-4 border-t border-cafe-primary/20">
+                      {bulkInputFields.map(({ index, field }) => (
+                        <div key={index}>
+                          <label className="block text-sm font-medium text-cafe-text mb-2">
+                            {field ? field.label : `Field ${index + 1}`} <span className="text-cafe-textMuted">(Bulk)</span> {field?.required && <span className="text-red-500">*</span>}
+                          </label>
+                          <input
+                            type="text"
+                            value={bulkInputValues[index.toString()] || ''}
+                            onChange={(e) => handleBulkInputChange(index.toString(), e.target.value)}
+                            className="w-full px-4 py-3 glass border border-cafe-primary/30 rounded-lg focus:ring-2 focus:ring-cafe-primary focus:border-cafe-primary transition-all duration-200 text-cafe-text placeholder-cafe-textMuted"
+                            placeholder={field?.placeholder || field?.label || `Field ${index + 1}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -326,13 +531,15 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
         <div className="glass-card rounded-xl p-6">
           <h2 className="text-2xl font-medium text-cafe-text mb-6">Choose Payment Method</h2>
           
-          <div className="grid grid-cols-1 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {paymentMethods.map((method) => (
               <button
                 key={method.id}
                 type="button"
-                onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 flex items-center space-x-3 ${
+                onClick={() => {
+                  setPaymentMethod(method.id as PaymentMethod);
+                }}
+                className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
                   paymentMethod === method.id
                     ? 'border-transparent text-white'
                     : 'glass border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
@@ -340,14 +547,17 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
                 style={paymentMethod === method.id ? { backgroundColor: '#1E7ACB' } : {}}
               >
                 <span className="text-2xl">💳</span>
-                <span className="font-medium">{method.name}</span>
+                <span className="font-medium text-sm text-center">{method.name}</span>
               </button>
             ))}
           </div>
 
           {/* Payment Details with QR Code */}
           {selectedPaymentMethod && (
-            <div className="glass-strong rounded-lg p-6 mb-6 border border-cafe-primary/30">
+            <div 
+              ref={paymentDetailsRef}
+              className="glass-strong rounded-lg p-6 mb-6 border border-cafe-primary/30"
+            >
               <h3 className="font-medium text-cafe-text mb-4">Payment Details</h3>
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex-1">
@@ -520,46 +730,99 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
             )}
           </div>
 
-          <button
-            onClick={handleCopyMessage}
-            disabled={uploadingReceipt}
-            className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform mb-3 flex items-center justify-center space-x-2 ${
-              !uploadingReceipt
-                ? 'glass border border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
-                : 'glass border border-cafe-primary/20 text-cafe-textMuted cursor-not-allowed'
-            }`}
-          >
-            {copied ? (
-              <>
-                <Check className="h-5 w-5" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-5 w-5" />
-                <span>Copy Order Message</span>
-              </>
-            )}
-          </button>
+          <div ref={buttonsRef}>
+            <button
+              onClick={handleCopyMessage}
+              disabled={uploadingReceipt}
+              className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform mb-3 flex items-center justify-center space-x-2 ${
+                !uploadingReceipt
+                  ? 'glass border border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
+                  : 'glass border border-cafe-primary/20 text-cafe-textMuted cursor-not-allowed'
+              }`}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-5 w-5" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-5 w-5" />
+                  <span>Copy Order Message</span>
+                </>
+              )}
+            </button>
 
-          <button
-            onClick={handlePlaceOrder}
-            disabled={!receiptImageUrl || uploadingReceipt}
-            className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-              receiptImageUrl && !uploadingReceipt
-                ? 'text-white hover:opacity-90 hover:scale-[1.02]'
-                : 'glass text-cafe-textMuted cursor-not-allowed'
-            }`}
-            style={receiptImageUrl && !uploadingReceipt ? { backgroundColor: '#1E7ACB' } : {}}
-          >
-            {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
-          </button>
-          
-          <p className="text-xs text-cafe-textMuted text-center mt-3">
-            You'll be redirected to Facebook Messenger to confirm your order. Your receipt has been uploaded and will be included in the message.
-          </p>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={!paymentMethod || !receiptImageUrl || uploadingReceipt}
+              className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
+                paymentMethod && receiptImageUrl && !uploadingReceipt
+                  ? 'text-white hover:opacity-90 hover:scale-[1.02]'
+                  : 'glass text-cafe-textMuted cursor-not-allowed'
+              }`}
+              style={paymentMethod && receiptImageUrl && !uploadingReceipt ? { backgroundColor: '#1E7ACB' } : {}}
+            >
+              {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
+            </button>
+            
+            <p className="text-xs text-cafe-textMuted text-center mt-3">
+              You'll be redirected to Facebook Messenger to confirm your order. Your receipt has been uploaded and will be included in the message.
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Fixed Scroll Indicator at Bottom */}
+      {step === 'payment' && selectedPaymentMethod && showScrollIndicator && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-50">
+          <div className="flex flex-col items-center space-y-1">
+            <ChevronUp 
+              className="h-8 w-8 text-cafe-primary" 
+              strokeWidth={4}
+              fill="currentColor"
+              style={{
+                animation: 'scrollUp 1.5s ease-in-out infinite',
+                animationDelay: '0s'
+              }}
+            />
+            <ChevronUp 
+              className="h-8 w-8 text-cafe-primary" 
+              strokeWidth={4}
+              fill="currentColor"
+              style={{
+                animation: 'scrollUp 1.5s ease-in-out infinite',
+                animationDelay: '0.3s'
+              }}
+            />
+            <ChevronUp 
+              className="h-8 w-8 text-cafe-primary" 
+              strokeWidth={4}
+              fill="currentColor"
+              style={{
+                animation: 'scrollUp 1.5s ease-in-out infinite',
+                animationDelay: '0.6s'
+              }}
+            />
+          </div>
+          <style>{`
+            @keyframes scrollUp {
+              0% {
+                opacity: 0;
+                transform: translateY(0);
+              }
+              50% {
+                opacity: 1;
+                transform: translateY(-10px);
+              }
+              100% {
+                opacity: 0;
+                transform: translateY(-20px);
+              }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };

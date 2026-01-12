@@ -50,6 +50,8 @@ const AdminDashboard: React.FC = () => {
     packages: false,
     customFields: false
   });
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<MenuItem>>({
     name: '',
     basePrice: 0,
@@ -113,7 +115,23 @@ const AdminDashboard: React.FC = () => {
     }
 
     // Validate currency packages
-    const invalidPackages = formData.variations.filter(v => !v.name || v.price <= 0);
+    const invalidPackages = formData.variations.filter(v => {
+      // Check if name is empty or just whitespace
+      if (!v.name || !v.name.trim()) {
+        return true;
+      }
+      // Check if price is valid (must be a number > 0)
+      let price: number;
+      if (typeof v.price === 'string') {
+        price = v.price === '' ? 0 : parseFloat(v.price);
+      } else if (v.price === null || v.price === undefined) {
+        price = 0;
+      } else {
+        price = v.price;
+      }
+      // Price must be a valid number greater than 0
+      return !price || price <= 0 || isNaN(price);
+    });
     if (invalidPackages.length > 0) {
       alert('Please fill in all currency package names and set valid prices (greater than 0)');
       return;
@@ -128,10 +146,21 @@ const AdminDashboard: React.FC = () => {
     }
 
     try {
+      // Clean up temporary category identifiers before saving
+      const cleanedVariations = formData.variations?.map(v => {
+        let cleanedCategory = v.category;
+        // Convert temporary empty category identifiers to undefined
+        if (cleanedCategory && (cleanedCategory.startsWith('__temp_empty_') || cleanedCategory.startsWith('__empty_'))) {
+          cleanedCategory = undefined;
+        }
+        return { ...v, category: cleanedCategory };
+      });
+      
       // Set basePrice to 0 since we don't use it anymore
       const itemData = {
         ...formData,
-        basePrice: 0
+        basePrice: 0,
+        variations: cleanedVariations
       };
 
       if (editingItem) {
@@ -234,22 +263,7 @@ const AdminDashboard: React.FC = () => {
     setShowBulkActions(selectedItems.length > 0);
   }, [selectedItems]);
 
-  const addVariation = () => {
-    const currentVariations = formData.variations || [];
-    const newVariation: Variation = {
-      id: `var-${Date.now()}`,
-      name: '',
-      price: 0,
-      description: '',
-      sort_order: currentVariations.length
-    };
-    setFormData({
-      ...formData,
-      variations: [...currentVariations, newVariation]
-    });
-  };
-
-  const updateVariation = (index: number, field: keyof Variation, value: string | number) => {
+  const updateVariation = (index: number, field: keyof Variation, value: string | number | null | undefined) => {
     const updatedVariations = [...(formData.variations || [])];
     updatedVariations[index] = { ...updatedVariations[index], [field]: value };
     setFormData({ ...formData, variations: updatedVariations });
@@ -326,15 +340,15 @@ const AdminDashboard: React.FC = () => {
       const currentPassword = error ? adminPassword : (data?.value || adminPassword);
 
       if (password === currentPassword) {
-        setIsAuthenticated(true);
-        localStorage.setItem('beracah_admin_auth', 'true');
-        setLoginError('');
+      setIsAuthenticated(true);
+      localStorage.setItem('beracah_admin_auth', 'true');
+      setLoginError('');
         setPassword('');
         if (data?.value) {
           setAdminPassword(data.value);
         }
-      } else {
-        setLoginError('Invalid password');
+    } else {
+      setLoginError('Invalid password');
       }
     } catch (err) {
       // Fallback to stored password on error
@@ -411,6 +425,7 @@ const AdminDashboard: React.FC = () => {
   // Form View (Add/Edit)
   if (currentView === 'add' || currentView === 'edit') {
     return (
+      <React.Fragment>
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -466,119 +481,145 @@ const AdminDashboard: React.FC = () => {
               {!collapsedSections.customization && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+              <div>
                       <label className="block text-sm font-medium text-black mb-2">Item Name (Game Name) *</label>
-                      <input
-                        type="text"
-                        value={formData.name || ''}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                <input
+                  type="text"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                         placeholder="Enter game name (e.g., Wild Rift, Mobile Legends)"
-                      />
-                    </div>
+                />
+              </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-black mb-2">Category *</label>
-                      <select
-                        value={formData.category || ''}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                      >
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">Category *</label>
+                <select
+                  value={formData.category || ''}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                >
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
 
-                    <div className="flex items-center">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.popular || false}
-                          onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                        />
-                        <span className="text-sm font-medium text-black">Mark as Popular</span>
-                      </label>
-                    </div>
+              <div className="flex items-center">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.popular || false}
+                    onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <span className="text-sm font-medium text-black">Mark as Popular</span>
+                </label>
+              </div>
 
-                    <div className="flex items-center">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.available ?? true}
-                          onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                        />
-                        <span className="text-sm font-medium text-black">Available for Order</span>
-                      </label>
-                    </div>
+              <div className="flex items-center">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.available ?? true}
+                    onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <span className="text-sm font-medium text-black">Available for Order</span>
+                </label>
+              </div>
+            </div>
+
+                  {/* Description Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">Description</label>
+                    <textarea
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
+                      placeholder="Enter game description (this will be displayed below the game title in the modal)"
+                      rows={4}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This description will be shown below the game title when customers tap on the game item</p>
                   </div>
 
-                  {/* Discount Pricing Section */}
+                  {/* Custom Subtitle Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">Custom Text Below Title</label>
+                    <input
+                      type="text"
+                      value={formData.subtitle || ''}
+                      onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="Enter custom text to display below the game title (optional)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This text will appear below the game title on the customer side. Leave empty to show no text.</p>
+                  </div>
+
+            {/* Discount Pricing Section */}
                   <div>
                     <h4 className="text-lg font-playfair font-medium text-black mb-4">Discount (Percentage)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
                         <label className="block text-sm font-medium text-black mb-2">Discount Percentage (%)</label>
-                        <input
-                          type="number"
+                  <input
+                    type="number"
                           min="0"
                           max="100"
                           step="0.01"
                           value={formData.discountPercentage || ''}
                           onChange={(e) => setFormData({ ...formData, discountPercentage: Number(e.target.value) || undefined })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                           placeholder="Enter discount percentage (e.g., 10 for 10%)"
-                        />
+                  />
                         <p className="text-xs text-gray-500 mt-1">
                           This percentage will be applied to all currency packages for this item.
                         </p>
-                      </div>
+                </div>
 
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={formData.discountActive || false}
-                            onChange={(e) => setFormData({ ...formData, discountActive: e.target.checked })}
-                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                          />
-                          <span className="text-sm font-medium text-black">Enable Discount</span>
-                        </label>
-                      </div>
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.discountActive || false}
+                      onChange={(e) => setFormData({ ...formData, discountActive: e.target.checked })}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <span className="text-sm font-medium text-black">Enable Discount</span>
+                  </label>
+                </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2">Discount Start Date</label>
-                        <input
-                          type="datetime-local"
-                          value={formData.discountStartDate || ''}
-                          onChange={(e) => setFormData({ ...formData, discountStartDate: e.target.value || undefined })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                        />
-                      </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Discount Start Date</label>
+                  <input
+                    type="datetime-local"
+                    value={formData.discountStartDate || ''}
+                    onChange={(e) => setFormData({ ...formData, discountStartDate: e.target.value || undefined })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                  />
+                </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2">Discount End Date</label>
-                        <input
-                          type="datetime-local"
-                          value={formData.discountEndDate || ''}
-                          onChange={(e) => setFormData({ ...formData, discountEndDate: e.target.value || undefined })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-2">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Discount End Date</label>
+                  <input
+                    type="datetime-local"
+                    value={formData.discountEndDate || ''}
+                    onChange={(e) => setFormData({ ...formData, discountEndDate: e.target.value || undefined })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
                       Leave dates empty for indefinite discount period. Discount will only be active if "Enable Discount" is checked and current time is within the date range. The percentage discount will be applied to all currency package prices.
-                    </p>
-                  </div>
+              </p>
+            </div>
 
                   {/* Image Upload */}
                   <div>
-                    <ImageUpload
-                      currentImage={formData.image}
-                      onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-                    />
+              <ImageUpload
+                currentImage={formData.image}
+                onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
+              />
                   </div>
                 </div>
               )}
@@ -604,7 +645,7 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {!collapsedSections.packages && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2 sm:gap-0">
                     {formData.variations && formData.variations.length > 1 && (
                       <button
@@ -617,65 +658,338 @@ const AdminDashboard: React.FC = () => {
                       </button>
                     )}
                     <button
-                      onClick={addVariation}
-                      className="flex items-center justify-center space-x-2 px-3 py-2 bg-cream-100 text-black rounded-lg hover:bg-cream-200 transition-colors duration-200 text-sm sm:text-base"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span className="whitespace-nowrap">Add Package</span>
-                    </button>
-                  </div>
+                      onClick={() => {
+                        // Create a new category with a default package
+                        const existingCategories = new Set<string>();
+                        formData.variations?.forEach(v => {
+                          const cat = v.category || 'Uncategorized';
+                          existingCategories.add(cat);
+                        });
+                        const categoryName = `Category ${existingCategories.size + 1}`;
+                        
+                        // Get the highest category sort value
+                        let maxCategorySort = 0;
+                        formData.variations?.forEach(v => {
+                          if (v.sort !== null && v.sort !== undefined && v.sort < 999) {
+                            maxCategorySort = Math.max(maxCategorySort, v.sort);
+                          }
+                        });
+                        
+                        const newVariation: Variation = {
+                          id: `var-${Date.now()}-${Math.random()}`,
+                          name: '',
+                          price: 0,
+                          description: '',
+                          sort_order: 0,
+                          category: categoryName,
+                          sort: maxCategorySort + 1
+                        };
+                        setFormData({
+                          ...formData,
+                          variations: [...(formData.variations || []), newVariation]
+                        });
+                        // Expand the new category
+                        setCollapsedCategories(prev => ({ ...prev, [categoryName]: false }));
+                      }}
+                      className="flex items-center justify-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors duration-200 text-sm sm:text-base"
+                >
+                  <Plus className="h-4 w-4" />
+                      <span className="whitespace-nowrap">Add Category</span>
+                </button>
+              </div>
 
                   {formData.variations && formData.variations.length > 0 ? (
-                    formData.variations.map((variation, index) => (
-                      <div key={variation.id} className="mb-3 p-4 bg-gray-50 rounded-lg space-y-3">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                          <input
-                            type="text"
-                            value={variation.name || ''}
-                            onChange={(e) => updateVariation(index, 'name', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
-                            placeholder="Package name (e.g., 5 Diamonds)"
-                          />
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={variation.price || ''}
-                              onChange={(e) => {
-                                let value = e.target.value;
-                                // Remove leading zeros (but keep single 0 if that's all there is)
-                                if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
-                                  value = value.replace(/^0+/, '') || '0';
-                                }
-                                const numValue = value === '' ? 0 : parseFloat(value) || 0;
-                                updateVariation(index, 'price', numValue);
-                              }}
-                              className="flex-1 sm:w-32 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
-                              placeholder="Price (₱)"
-                              min="0"
-                              step="0.01"
-                            />
-                            <button
-                              onClick={() => removeVariation(index)}
-                              className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200 flex-shrink-0"
-                              aria-label="Remove package"
-                            >
-                              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                            </button>
-                          </div>
+                    (() => {
+                      // Group all variations by category
+                      // Packages without categories go into an "Unnamed Category"
+                      const groupedByCategory: Record<string, { variations: Variation[], categorySort: number, originalCategory: string | undefined, isUnnamed: boolean }> = {};
+                      const UNNAMED_CATEGORY_KEY = '__unnamed_category__';
+                      
+                      formData.variations.forEach((variation) => {
+                        let categoryKey: string;
+                        let isUnnamed = false;
+                        
+                        // Check if this is a temporary empty category identifier
+                        if (variation.category && variation.category.startsWith('__temp_empty_')) {
+                          categoryKey = variation.category;
+                        } else if (!variation.category || variation.category.trim() === '') {
+                          // Packages without categories go into "Unnamed Category"
+                          categoryKey = UNNAMED_CATEGORY_KEY;
+                          isUnnamed = true;
+                        } else {
+                          categoryKey = variation.category;
+                        }
+                        
+                        const categorySort = variation.sort !== null && variation.sort !== undefined ? variation.sort : 999;
+                        
+                        if (!groupedByCategory[categoryKey]) {
+                          groupedByCategory[categoryKey] = { 
+                            variations: [], 
+                            categorySort: 999,
+                            originalCategory: variation.category,
+                            isUnnamed: isUnnamed
+                          };
+                        }
+                        groupedByCategory[categoryKey].variations.push(variation);
+                        // Use the minimum sort value as the category sort
+                        if (categorySort < groupedByCategory[categoryKey].categorySort) {
+                          groupedByCategory[categoryKey].categorySort = categorySort;
+                        }
+                      });
+
+                      // Sort categories by sort order
+                      const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+                        return groupedByCategory[a].categorySort - groupedByCategory[b].categorySort;
+                      });
+
+                      return (
+                        <div className="space-y-6">
+                          {/* Show all categories (including unnamed) */}
+                          {sortedCategories.map((category) => {
+                            const categoryData = groupedByCategory[category];
+                            const categoryVariations = categoryData.variations;
+                            const categorySort = categoryData.categorySort;
+                            const originalCategory = categoryData.originalCategory;
+                            const isUnnamed = categoryData.isUnnamed;
+                            // Display name: check if this is unnamed category, temporary empty category, or if original is empty
+                            let displayCategoryName = '';
+                            let isReadOnly = false;
+                            if (isUnnamed || category === '__unnamed_category__') {
+                              // This is the unnamed category, show "Unnamed Category" and make it read-only
+                              displayCategoryName = 'Unnamed Category';
+                              isReadOnly = true;
+                            } else if (category.startsWith('__temp_empty_') || category.startsWith('__empty_')) {
+                              // This is an empty category, show empty string (but category won't vanish)
+                              displayCategoryName = '';
+                            } else if (originalCategory && originalCategory.trim() !== '') {
+                              displayCategoryName = originalCategory;
+                            } else {
+                              displayCategoryName = category;
+                            }
+                            // Store the original category key for stable reference
+                            const originalCategoryKey = category;
+                            // Use the first variation ID as a stable key that doesn't change when category name changes
+                            const stableKey = categoryVariations[0]?.id || `category-${originalCategoryKey}`;
+
+                            const isCategoryCollapsed = collapsedCategories[category] ?? false;
+                            
+                            return (
+                              <div key={stableKey} className="border border-gray-300 rounded-lg p-4 bg-white">
+                                {/* Category Header */}
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+                                  <button
+                                    onClick={() => {
+                                      setCollapsedCategories(prev => ({
+                                        ...prev,
+                                        [category]: !prev[category]
+                                      }));
+                                    }}
+                                    className="p-1 hover:bg-gray-100 rounded transition-colors duration-200 flex-shrink-0"
+                                    aria-label={isCategoryCollapsed ? "Expand category" : "Collapse category"}
+                                  >
+                                    {isCategoryCollapsed ? (
+                                      <ChevronDown className="h-5 w-5 text-gray-600" />
+                                    ) : (
+                                      <ChevronUp className="h-5 w-5 text-gray-600" />
+                                    )}
+                                  </button>
+                                  <div className="flex-1 min-w-0">
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Category Name</label>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        value={displayCategoryName}
+                                        onChange={(e) => {
+                                          // Don't allow editing "Unnamed Category"
+                                          if (isReadOnly) {
+                                            return;
+                                          }
+                                          
+                                          const newCategoryName = e.target.value;
+                                          // Find all variations in this category using the original category key
+                                          // We need to match variations that belong to this category group
+                                          const categoryVariationIds = new Set(categoryVariations.map(v => v.id));
+                                          
+                                          const updatedVariations = formData.variations!.map(v => {
+                                            // Check if this variation belongs to this category group
+                                            if (categoryVariationIds.has(v.id)) {
+                                              // If empty, use a unique identifier based on first variation ID to keep this group separate
+                                              // Otherwise, set to the new name (trimmed)
+                                              if (newCategoryName.trim() === '') {
+                                                // Use the first variation ID as a temporary category identifier
+                                                // This ensures the category doesn't vanish - it will be grouped by this temp ID
+                                                const tempCategoryId = `__temp_empty_${categoryVariations[0]?.id || 'default'}__`;
+                                                return { ...v, category: tempCategoryId };
+                                              } else {
+                                                // If user types a name, remove the temp identifier and set the actual name
+                                                return { ...v, category: newCategoryName.trim() };
+                                              }
+                                            }
+                                            return v;
+                                          });
+                                          setFormData({ ...formData, variations: updatedVariations });
+                                        }}
+                                        disabled={isReadOnly}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        placeholder="Category name (e.g., Category 1)"
+                                      />
+                                      {!isReadOnly && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('Delete category clicked:', category);
+                                            setCategoryToDelete(category);
+                                          }}
+                                          className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200 flex-shrink-0"
+                                          aria-label="Delete category"
+                                          title="Delete category"
+                                          type="button"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="w-full sm:w-32 flex-shrink-0">
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Category Sort</label>
+                                    <input
+                                      type="number"
+                                      value={categorySort !== 999 ? categorySort : ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value === '' ? 999 : parseInt(e.target.value) || 999;
+                                        // Update sort for all variations in this category using variation IDs
+                                        const categoryVariationIds = new Set(categoryVariations.map(v => v.id));
+                                        const updatedVariations = formData.variations!.map(v => {
+                                          if (categoryVariationIds.has(v.id)) {
+                                            return { ...v, sort: value !== 999 ? value : null };
+                                          }
+                                          return v;
+                                        });
+                                        setFormData({ ...formData, variations: updatedVariations });
+                                      }}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                      placeholder="Sort"
+                                      min="0"
+                                      step="1"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Packages in this category */}
+                                {!isCategoryCollapsed && (
+                                <div className="space-y-3">
+                                  {categoryVariations.map((variation) => {
+                                    const index = formData.variations!.findIndex(v => v.id === variation.id);
+                                    return (
+                                      <div key={variation.id} className="p-3 bg-gray-50 rounded-lg space-y-3 border border-gray-200">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                          <input
+                                            type="text"
+                                            value={variation.name || ''}
+                    onChange={(e) => updateVariation(index, 'name', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                            placeholder="Package name (e.g., 5 Diamonds)"
+                  />
+                                          <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                                              value={variation.price !== undefined && variation.price !== null && variation.price !== 0 ? variation.price : (variation.price === '' ? '' : '')}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow empty string while typing to enable deletion of zeros
+                                                if (value === '') {
+                                                  // Store as empty string temporarily to allow deletion
+                                                  updateVariation(index, 'price', '');
+                                                } else {
+                                                  // Remove leading zeros except for decimal numbers (0.5 is valid)
+                                                  let cleanedValue = value;
+                                                  // Only remove leading zeros if it's not a decimal
+                                                  if (cleanedValue.length > 1 && cleanedValue.startsWith('0') && cleanedValue[1] !== '.' && cleanedValue[1] !== ',') {
+                                                    cleanedValue = cleanedValue.replace(/^0+/, '') || '0';
+                                                  }
+                                                  const numValue = parseFloat(cleanedValue);
+                                                  if (!isNaN(numValue)) {
+                                                    updateVariation(index, 'price', numValue);
+                                                  }
+                                                }
+                                              }}
+                                              onBlur={(e) => {
+                                                // When user leaves the field, convert empty to 0 for validation
+                                                const currentPrice = variation.price;
+                                                if (currentPrice === '' || currentPrice === null || currentPrice === undefined) {
+                                                  updateVariation(index, 'price', 0);
+                                                }
+                                              }}
+                                              className="flex-1 sm:w-32 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                              placeholder="Price (₱)"
+                                              min="0"
+                                              step="0.01"
+                  />
+                  <button
+                    onClick={() => removeVariation(index)}
+                                              className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200 flex-shrink-0"
+                                              aria-label="Remove package"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+            </div>
+                                        <textarea
+                                          value={variation.description || ''}
+                                          onChange={(e) => updateVariation(index, 'description', e.target.value)}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-y"
+                                          placeholder="Package description (optional)"
+                                          rows={2}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+
+                                  {/* Add Package to this category */}
+                                  <button
+                                    onClick={() => {
+                                      // Determine the category value to use
+                                      let categoryValue: string | undefined;
+                                      if (category.startsWith('__temp_empty_') || category.startsWith('__empty_')) {
+                                        // If this is an empty category, use the same temporary identifier
+                                        categoryValue = category;
+                                      } else if (category === 'Uncategorized') {
+                                        categoryValue = undefined;
+                                      } else {
+                                        categoryValue = category;
+                                      }
+                                      
+                                      const newVariation: Variation = {
+                                        id: `var-${Date.now()}-${Math.random()}`,
+                                        name: '',
+                                        price: 0,
+                                        description: '',
+                                        sort_order: categoryVariations.length,
+                                        category: categoryValue
+                                      };
+                                      setFormData({
+                                        ...formData,
+                                        variations: [...(formData.variations || []), newVariation]
+                                      });
+                                    }}
+                                    className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm border-2 border-dashed border-gray-300"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    <span>Add Package to {displayCategoryName || 'Category'}</span>
+                                  </button>
+                                </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
-                        <textarea
-                          value={variation.description || ''}
-                          onChange={(e) => updateVariation(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base resize-y"
-                          placeholder="Package description (optional)"
-                          rows={2}
-                        />
-                      </div>
-                    ))
+                      );
+                    })()
                   ) : (
                     <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                       <p className="text-gray-500">No currency packages added yet</p>
-                      <p className="text-sm text-gray-400 mt-1">Click "Add Package" to add in-game currency options</p>
+                      <p className="text-sm text-gray-400 mt-1">Click "Add Category" to create a category and add packages</p>
                     </div>
                   )}
                 </div>
@@ -706,20 +1020,20 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex justify-end">
                     <button
                       onClick={addCustomField}
-                      className="flex items-center space-x-2 px-3 py-2 bg-cream-100 text-black rounded-lg hover:bg-cream-200 transition-colors duration-200"
-                    >
-                      <Plus className="h-4 w-4" />
+                  className="flex items-center space-x-2 px-3 py-2 bg-cream-100 text-black rounded-lg hover:bg-cream-200 transition-colors duration-200"
+                >
+                  <Plus className="h-4 w-4" />
                       <span>Add Field</span>
-                    </button>
-                  </div>
+                </button>
+              </div>
 
                   {formData.customFields && formData.customFields.length > 0 ? (
                     formData.customFields.map((customField, index) => (
                       <div key={index} className="mb-3 p-4 bg-gray-50 rounded-lg space-y-3">
                         <div>
                           <label className="block text-sm font-medium text-black mb-1">Field Label *</label>
-                          <input
-                            type="text"
+                  <input
+                    type="text"
                             value={customField.label || ''}
                             onChange={(e) => updateCustomField(index, 'label', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -728,7 +1042,7 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-black mb-1">Placeholder Text</label>
-                          <input
+                  <input
                             type="text"
                             value={customField.placeholder || ''}
                             onChange={(e) => updateCustomField(index, 'placeholder', e.target.value)}
@@ -746,20 +1060,20 @@ const AdminDashboard: React.FC = () => {
                             />
                             <span className="text-sm font-medium text-black">Required Field</span>
                           </label>
-                          <button
+                  <button
                             onClick={() => removeCustomField(index)}
-                            className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
+                    className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+            </div>
                     ))
                   ) : (
                     <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                       <p className="text-gray-500">No custom fields added yet</p>
                       <p className="text-sm text-gray-400 mt-1">Click "Add Field" to create custom customer information fields</p>
-                    </div>
+          </div>
                   )}
                 </div>
               )}
@@ -768,6 +1082,68 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Delete Category Confirmation Dialog */}
+      {categoryToDelete && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" 
+          onClick={() => setCategoryToDelete(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Category</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this category? All packages in this category will be moved to "Unnamed Category".
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setCategoryToDelete(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (categoryToDelete) {
+                    // Find all variations that belong to this category
+                    // The categoryToDelete is the key from groupedByCategory
+                    const updatedVariations = formData.variations!.map(v => {
+                      const vCategory = v.category || '';
+                      
+                      // Match variations that belong to this category
+                      // Handle different category key types:
+                      // 1. Direct match
+                      // 2. Unnamed category (undefined/null/empty)
+                      // 3. Temporary empty category identifiers
+                      if (categoryToDelete === '__unnamed_category__') {
+                        // Deleting unnamed category - move to unnamed (no change needed, but handle edge case)
+                        if (!vCategory || vCategory.trim() === '' || vCategory === '__unnamed_category__') {
+                          return { ...v, category: undefined, sort: null };
+                        }
+                      } else if (vCategory === categoryToDelete || 
+                                 (categoryToDelete.startsWith('__temp_empty_') && vCategory === categoryToDelete)) {
+                        // Move to "Unnamed Category" by setting category to undefined
+                        return { ...v, category: undefined, sort: null };
+                      }
+                      return v;
+                    });
+                    
+                    setFormData({ ...formData, variations: updatedVariations });
+                    setCategoryToDelete(null);
+                  }
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded transition-colors duration-200"
+              >
+                Delete Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </React.Fragment>
     );
   }
 
