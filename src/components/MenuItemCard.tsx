@@ -73,7 +73,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     <>
       <div 
         onClick={handleCardClick}
-        className={`flex flex-row items-center transition-all duration-300 group rounded-xl p-3 md:p-4 gap-3 md:gap-4 ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`flex flex-col transition-all duration-300 group rounded-md overflow-hidden ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
         style={{
           background: 'rgba(0, 206, 209, 0.1)',
           border: '1px solid rgba(0, 206, 209, 0.3)',
@@ -104,8 +104,8 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           }
         }}
       >
-        {/* Square Game Icon on Left */}
-        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
+        {/* Game Image on Top */}
+        <div className="relative w-full aspect-square rounded-t-md overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
           {item.image ? (
             <img
               src={item.image}
@@ -124,11 +124,11 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           </div>
         </div>
         
-        {/* Game Name and Info on Right */}
-        <div className="flex-1 overflow-hidden min-w-0">
+        {/* Game Name and Info Below */}
+        <div className="p-1.5 md:p-2 overflow-hidden">
           <h4 
             ref={nameRef}
-            className={`font-bold whitespace-nowrap text-base sm:text-lg mb-1 transition-colors duration-200 ${
+            className={`font-bold whitespace-nowrap text-xs sm:text-sm mb-0.5 transition-colors duration-200 ${
               shouldScroll ? 'animate-scroll-text' : ''
             }`}
             style={shouldScroll ? {
@@ -149,7 +149,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             )}
           </h4>
           {item.subtitle && (
-            <p className="text-xs sm:text-sm transition-colors duration-200" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+            <p className="text-[10px] sm:text-xs transition-colors duration-200" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               {item.subtitle}
             </p>
           )}

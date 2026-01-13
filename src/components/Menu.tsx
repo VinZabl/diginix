@@ -181,7 +181,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
             <span className="ml-4 text-sm text-[#00CED1]/70">({menuItems.length} {menuItems.length === 1 ? 'game' : 'games'})</span>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2 md:gap-2.5">
             {renderMenuItems(menuItems)}
           </div>
         </section>
@@ -213,7 +213,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
             <h3 className="text-3xl font-medium text-cafe-text">Popular</h3>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2 md:gap-2.5">
             {renderMenuItems(menuItems)}
           </div>
         </section>
@@ -236,7 +236,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
               <h3 className="text-3xl font-medium text-cafe-text">Popular</h3>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2 md:gap-2.5">
               {renderMenuItems(popularItems)}
             </div>
           </section>
@@ -254,7 +254,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
                 <h3 className="text-3xl font-medium text-cafe-text">{category.name}</h3>
               </div>
               
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2 md:gap-2.5">
                 {renderMenuItems(categoryItems)}
               </div>
             </section>
