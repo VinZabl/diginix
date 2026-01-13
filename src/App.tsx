@@ -9,13 +9,22 @@ import Checkout from './components/Checkout';
 import FloatingCartButton from './components/FloatingCartButton';
 import AdminDashboard from './components/AdminDashboard';
 import { useMenu } from './hooks/useMenu';
+import { useSiteSettings } from './hooks/useSiteSettings';
 
 function MainApp() {
   const cart = useCart();
   const { menuItems } = useMenu();
+  const { siteSettings } = useSiteSettings();
   const [currentView, setCurrentView] = React.useState<'menu' | 'cart' | 'checkout'>('menu');
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
+
+  // Update document title with site name
+  React.useEffect(() => {
+    if (siteSettings?.site_name) {
+      document.title = siteSettings.site_name;
+    }
+  }, [siteSettings?.site_name]);
 
   const handleViewChange = (view: 'menu' | 'cart' | 'checkout') => {
     setCurrentView(view);
@@ -76,7 +85,7 @@ function MainApp() {
   }, [menuItems, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FFB6C1' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0A0A0A' }}>
       <Header 
         cartItemsCount={cart.getTotalItems()}
         onCartClick={() => handleViewChange('cart')}

@@ -5,21 +5,21 @@ export default {
     extend: {
       colors: {
         cafe: {
-          accent: '#E74694', // Pink accent
+          accent: '#00CED1', // Turquoise accent
           dark: '#0A0A0A', // Off-black background
           cream: '#F5F5F5',
           beige: '#E5E5E5',
           latte: '#D5D5D5',
-          espresso: '#E74694',
+          espresso: '#E03090',
           light: '#1A1A1A',
-          // Kitty Galore theme colors
-          primary: '#E74694', // Pink primary
-          secondary: '#F05BA8', // Slightly lighter pink
-          darkBg: '#FFF5F5', // Off-light pink main background
-          darkCard: '#FFF9F9', // Slightly darker card background
-          glass: 'rgba(231, 70, 148, 0.1)', // Glass effect with accent color
-          text: '#2D1B2E', // Dark text for light background
-          textMuted: '#5A4A5B' // Muted text
+          // New theme colors
+          primary: '#00CED1', // Turquoise primary
+          secondary: '#E03090', // Pink/magenta secondary
+          darkBg: '#0A0A0A', // Off-black main background
+          darkCard: '#0A0A0A', // Dark card background
+          glass: 'rgba(0, 206, 209, 0.1)', // Glass effect with turquoise
+          text: '#FFFFFF', // White text for dark background
+          textMuted: 'rgba(255, 255, 255, 0.7)' // Muted white text
         }
       },
       fontFamily: {

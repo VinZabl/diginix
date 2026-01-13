@@ -2,28 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kitty Galore Theme Styles */
+/* Kitty Galore Theme Styles - New Brand Colors */
+/* Accent Colors: #00CED1 (Dark Turquoise) and #E03090 (Pink/Magenta) */
+/* Background: Off-black (#0A0A0A) */
+
 /* Glassmorphism utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(10, 10, 10, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(231, 70, 148, 0.2);
+  border: 1px solid rgba(0, 206, 209, 0.2);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(10, 10, 10, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(231, 70, 148, 0.3);
+  border: 1px solid rgba(0, 206, 209, 0.3);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(10, 10, 10, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(231, 70, 148, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(231, 70, 148, 0.15);
+  border: 1px solid rgba(0, 206, 209, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 206, 209, 0.15);
 }
 
 .glass-hover {
@@ -31,9 +34,9 @@
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(231, 70, 148, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(231, 70, 148, 0.25);
+  background: rgba(10, 10, 10, 0.95);
+  border-color: rgba(0, 206, 209, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(0, 206, 209, 0.25);
 }
 
 .package-card-hover {
@@ -41,9 +44,9 @@
 }
 
 .package-card-hover:hover {
-  background: #E74694 !important;
-  border: 2px solid #E74694 !important;
-  box-shadow: 0 4px 12px 0 rgba(231, 70, 148, 0.4) !important;
+  background: #E03090 !important;
+  border: 2px solid #E03090 !important;
+  box-shadow: 0 4px 12px 0 rgba(224, 48, 144, 0.4) !important;
   transform: scale(1.02) !important;
 }
 
@@ -54,29 +57,35 @@
   color: white !important;
 }
 
-/* Glow effects for Kitty Galore theme */
+/* Glow effects for new theme */
 .glow-blue {
-  box-shadow: 0 0 20px rgba(231, 70, 148, 0.5);
+  box-shadow: 0 0 20px rgba(0, 206, 209, 0.5);
 }
 
 .glow-blue-strong {
-  box-shadow: 0 0 30px rgba(231, 70, 148, 0.8);
+  box-shadow: 0 0 30px rgba(0, 206, 209, 0.8);
 }
 
 /* Text glow */
 .text-glow {
-  text-shadow: 0 0 10px rgba(231, 70, 148, 0.8);
+  text-shadow: 0 0 10px rgba(0, 206, 209, 0.8);
 }
 
-/* Legacy cafe color helpers (for compatibility) */
-.bg-cafe-cream { background-color: #F5F5F5; }
-.bg-cafe-beige { background-color: #E5E5E5; }
-.bg-cafe-light { background-color: rgba(255, 255, 255, 0.6); }
-.text-cafe-accent { color: #E74694; }
-.text-cafe-dark { color: #2D1B2E; }
-.border-cafe-accent { border-color: #E74694; }
-.border-cafe-latte { border-color: rgba(231, 70, 148, 0.3); }
-.ring-cafe-accent { --tw-ring-color: #E74694; }
+/* Theme color helpers */
+.bg-cafe-cream { background-color: rgba(10, 10, 10, 0.8); }
+.bg-cafe-beige { background-color: rgba(20, 20, 20, 0.8); }
+.bg-cafe-light { background-color: rgba(10, 10, 10, 0.6); }
+.text-cafe-accent { color: #00CED1; }
+.text-cafe-primary { color: #00CED1; }
+.text-cafe-secondary { color: #E03090; }
+.text-cafe-text { color: #FFFFFF; }
+.text-cafe-textMuted { color: rgba(255, 255, 255, 0.7); }
+.text-cafe-dark { color: #0A0A0A; }
+.border-cafe-accent { border-color: #00CED1; }
+.border-cafe-primary { border-color: #00CED1; }
+.border-cafe-latte { border-color: rgba(0, 206, 209, 0.3); }
+.ring-cafe-accent { --tw-ring-color: #00CED1; }
+.ring-cafe-primary { --tw-ring-color: #00CED1; }
 
 /* Hide scrollbar for mobile nav */
 .scrollbar-hide {
@@ -159,6 +168,36 @@ img {
 
 /* Search input placeholder color */
 input[type="text"]::placeholder {
-  color: #E74694;
+  color: #00CED1;
   opacity: 0.7;
+}
+
+/* Admin Dashboard Overrides - Change cyan text to black */
+/* Target admin pages (they use light backgrounds like bg-gray-50 or bg-white) */
+.bg-gray-50 .text-cafe-primary,
+.bg-gray-50 .text-cafe-accent,
+.bg-white .text-cafe-primary,
+.bg-white .text-cafe-accent {
+  color: #000000 !important;
+}
+
+/* Also override hover states in admin */
+.bg-gray-50 .hover\:text-cafe-primary:hover,
+.bg-white .hover\:text-cafe-primary:hover {
+  color: #000000 !important;
+}
+
+/* Override placeholder colors in admin pages */
+.bg-gray-50 input::placeholder,
+.bg-gray-50 textarea::placeholder,
+.bg-white input::placeholder,
+.bg-white textarea::placeholder,
+.bg-gray-50 input[type="text"]::placeholder,
+.bg-gray-50 input[type="email"]::placeholder,
+.bg-gray-50 input[type="password"]::placeholder,
+.bg-white input[type="text"]::placeholder,
+.bg-white input[type="email"]::placeholder,
+.bg-white input[type="password"]::placeholder {
+  color: #6B7280 !important; /* gray-500 */
+  opacity: 1 !important;
 }

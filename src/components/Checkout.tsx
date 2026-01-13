@@ -3,6 +3,7 @@ import { ArrowLeft, Upload, X, Copy, Check, ChevronUp, Download } from 'lucide-r
 import { CartItem, PaymentMethod, CustomField } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { useImageUpload } from '../hooks/useImageUpload';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 interface CheckoutProps {
   cartItems: CartItem[];
@@ -13,6 +14,7 @@ interface CheckoutProps {
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) => {
   const { paymentMethods } = usePaymentMethods();
   const { uploadImage, uploading: uploadingReceipt } = useImageUpload();
+  const { siteSettings } = useSiteSettings();
   const [step, setStep] = useState<'details' | 'payment'>('details');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const paymentDetailsRef = useRef<HTMLDivElement>(null);
@@ -273,8 +275,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
       customFieldsSection = `🎮 IGN: ${customFieldValues['default_ign'] || ''}`;
     }
 
+    const siteName = siteSettings?.site_name || 'Kitty Galore Game Credits';
     const orderDetails = `
-🛒 Kitty Galore Game Credits ORDER
+🛒 ${siteName} ORDER
 
 ${customFieldsSection}
 
@@ -294,7 +297,7 @@ ${cartItems.map(item => {
 
 📸 Payment Receipt: ${receiptImageUrl || ''}
 
-Please confirm this order to proceed. Thank you for choosing Kitty Galore Game Credits! 🎮
+Please confirm this order to proceed. Thank you for choosing ${siteName}! 🎮
     `.trim();
 
     return orderDetails;
@@ -409,7 +412,7 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
 
     const orderDetails = generateOrderMessage();
     const encodedMessage = encodeURIComponent(orderDetails);
-    const messengerUrl = `https://m.me/KGGameCredits?text=${encodedMessage}`;
+    const messengerUrl = `https://m.me/diginix.ph?text=${encodedMessage}`;
     
     window.open(messengerUrl, '_blank');
     
@@ -436,15 +439,15 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
   if (step === 'details') {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-8">
+        <div className="flex items-center justify-center relative mb-8">
           <button
             onClick={onBack}
-            className="flex items-center space-x-2 text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
+            className="absolute left-0 flex items-center text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
+            aria-label="Back to Cart"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Back to Cart</span>
           </button>
-          <h1 className="text-3xl font-semibold text-cafe-text ml-8">Order Details</h1>
+          <h1 className="text-3xl font-semibold text-cafe-text">Order Details</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -573,7 +576,7 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
                     ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                     : 'glass text-cafe-textMuted cursor-not-allowed'
                 }`}
-                style={isDetailsValid ? { backgroundColor: '#E74694' } : {}}
+                style={isDetailsValid ? { backgroundColor: '#E03090' } : {}}
               >
                 Proceed to Payment
               </button>
@@ -620,15 +623,15 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
   // Payment Step
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center mb-8">
+      <div className="flex items-center justify-center relative mb-8">
         <button
           onClick={() => setStep('details')}
-          className="flex items-center space-x-2 text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
+          className="absolute left-0 flex items-center text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
+          aria-label="Back to Details"
         >
           <ArrowLeft className="h-5 w-5" />
-          <span>Back to Details</span>
         </button>
-        <h1 className="text-3xl font-semibold text-cafe-text ml-8">Payment</h1>
+        <h1 className="text-3xl font-semibold text-cafe-text">Payment</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -649,7 +652,7 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
                     ? 'border-transparent text-white'
                     : 'glass border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
                 }`}
-                style={paymentMethod === method.id ? { backgroundColor: '#E74694' } : {}}
+                style={paymentMethod === method.id ? { backgroundColor: '#00CED1' } : {}}
               >
                 {/* Icon on Top */}
                 <div className="relative w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg flex items-center justify-center">
@@ -723,7 +726,7 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
                     </>
                   ) : (
                     <div className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30 shadow-sm bg-gray-100 flex items-center justify-center p-4">
-                      <p className="text-sm text-cafe-textMuted text-center">QR code not available</p>
+                      <p className="text-sm text-gray-600 text-center">QR code not available</p>
                     </div>
                   )}
                 </div>
@@ -939,7 +942,7 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
                   ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                   : 'glass text-cafe-textMuted cursor-not-allowed'
               }`}
-              style={paymentMethod && receiptImageUrl && !uploadingReceipt && hasCopiedMessage ? { backgroundColor: '#E74694' } : {}}
+              style={paymentMethod && receiptImageUrl && !uploadingReceipt && hasCopiedMessage ? { backgroundColor: '#E03090' } : {}}
             >
               {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
             </button>

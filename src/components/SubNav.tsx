@@ -26,8 +26,8 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
             <div className="relative">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${
                 isSearchFocused || searchQuery 
-                  ? 'text-cafe-primary' 
-                  : 'text-cafe-text/60'
+                  ? 'text-white' 
+                  : 'text-[#00CED1]/60'
               }`} />
               <input
                 type="text"
@@ -38,12 +38,12 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                 onBlur={() => setIsSearchFocused(false)}
                 className={`w-full pl-10 pr-10 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 ${
                   isSearchFocused || searchQuery
-                    ? 'text-white border-transparent bg-cafe-primary'
-                    : 'bg-transparent border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                    ? 'text-white border-transparent'
+                    : 'bg-transparent border-[#00CED1]/30 hover:border-[#00CED1] hover:bg-[#00CED1]/10'
                 }`}
                 style={isSearchFocused || searchQuery 
-                  ? { backgroundColor: '#E74694', color: 'white' } 
-                  : { color: '#E74694' }
+                  ? { backgroundColor: '#00CED1', color: 'white' } 
+                  : { color: '#00CED1' }
                 }
               />
               {searchQuery && (
@@ -71,10 +71,10 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                   onClick={() => onCategoryClick('all')}
                   className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                     selectedCategory === 'all'
-                      ? 'text-white border-transparent'
-                      : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                      ? 'border-transparent'
+                      : 'bg-transparent text-white border-[#00CED1]/30 hover:border-[#00CED1] hover:bg-[#00CED1]/10'
                   }`}
-                  style={selectedCategory === 'all' ? { backgroundColor: '#E74694' } : {}}
+                  style={selectedCategory === 'all' ? { backgroundColor: '#00CED1', color: '#0A0A0A' } : { color: '#FFFFFF' }}
                 >
                   All
                 </button>
@@ -83,10 +83,10 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                     onClick={() => onCategoryClick('popular')}
                     className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                       selectedCategory === 'popular'
-                        ? 'text-white border-transparent'
-                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                        ? 'border-transparent'
+                        : 'bg-transparent text-white border-[#00CED1]/30 hover:border-[#00CED1] hover:bg-[#00CED1]/10'
                     }`}
-                    style={selectedCategory === 'popular' ? { backgroundColor: '#E74694' } : {}}
+                    style={selectedCategory === 'popular' ? { backgroundColor: '#00CED1', color: '#0A0A0A' } : { color: '#FFFFFF' }}
                   >
                     Popular
                   </button>
@@ -97,10 +97,10 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                     onClick={() => onCategoryClick(c.id)}
                     className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                       selectedCategory === c.id
-                        ? 'text-white border-transparent'
-                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                        ? 'border-transparent'
+                        : 'bg-transparent text-white border-[#00CED1]/30 hover:border-[#00CED1] hover:bg-[#00CED1]/10'
                     }`}
-                    style={selectedCategory === c.id ? { backgroundColor: '#E74694' } : {}}
+                    style={selectedCategory === c.id ? { backgroundColor: '#00CED1', color: '#0A0A0A' } : { color: '#FFFFFF' }}
                   >
                     {c.name}
                   </button>

@@ -14,9 +14,10 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClic
   return (
     <header className="sticky top-0 z-50 shadow-sm" style={{ 
       border: 'none',
-      background: '#4B1F42',
+      background: '#0A0A0A',
       backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)'
+      WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '1px solid rgba(0, 206, 209, 0.2)'
     }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3">
         <div className="flex items-center justify-between min-h-12 md:min-h-16">
@@ -33,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClic
               }}
             />
             <span className="text-base sm:text-lg md:text-xl font-bold text-white whitespace-nowrap">
-              Kitty Galore Game Credits
+              {siteSettings?.site_name || 'Kitty Galore Game Credits'}
             </span>
           </button>
 
@@ -44,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClic
             >
               <ShoppingCart className="h-6 w-6" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-cafe-primary to-cafe-secondary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce-gentle glow-blue">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#00CED1] to-[#E03090] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce-gentle glow-blue">
                   {cartItemsCount}
                 </span>
               )}

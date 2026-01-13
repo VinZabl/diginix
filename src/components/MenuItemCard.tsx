@@ -73,26 +73,39 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     <>
       <div 
         onClick={handleCardClick}
-        className={`flex flex-row items-center transition-all duration-300 group rounded-xl p-1.5 md:p-2 gap-1.5 md:gap-2 ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`flex flex-row items-center transition-all duration-300 group rounded-xl p-3 md:p-4 gap-3 md:gap-4 ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
         style={{
-          background: '#E74694',
-          boxShadow: '0 4px 6px rgba(231, 70, 148, 0.2)'
+          background: 'rgba(0, 206, 209, 0.1)',
+          border: '1px solid rgba(0, 206, 209, 0.3)',
+          boxShadow: '0 4px 6px rgba(0, 206, 209, 0.1)'
         }}
         onMouseEnter={(e) => {
           if (item.available) {
-            e.currentTarget.style.background = '#F05BA8';
-            e.currentTarget.style.boxShadow = '0 8px 16px rgba(231, 70, 148, 0.3)';
+            e.currentTarget.style.background = 'rgba(224, 48, 144, 0.2)';
+            e.currentTarget.style.borderColor = 'rgba(224, 48, 144, 0.5)';
+            e.currentTarget.style.boxShadow = '0 8px 16px rgba(224, 48, 144, 0.2)';
+            // Change text to white on hover
+            const textElements = e.currentTarget.querySelectorAll('h4, p');
+            textElements.forEach((el: any) => {
+              el.style.color = '#FFFFFF';
+            });
           }
         }}
         onMouseLeave={(e) => {
           if (item.available) {
-            e.currentTarget.style.background = '#E74694';
-            e.currentTarget.style.boxShadow = '0 4px 6px rgba(231, 70, 148, 0.2)';
+            e.currentTarget.style.background = 'rgba(0, 206, 209, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(0, 206, 209, 0.3)';
+            e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 206, 209, 0.1)';
+            // Change text back to white (for dark background)
+            const textElements = e.currentTarget.querySelectorAll('h4, p');
+            textElements.forEach((el: any) => {
+              el.style.color = '#FFFFFF';
+            });
           }
         }}
       >
         {/* Square Game Icon on Left */}
-        <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
           {item.image ? (
             <img
               src={item.image}
@@ -107,7 +120,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             />
           ) : null}
           <div className={`absolute inset-0 flex items-center justify-center ${item.image ? 'hidden' : ''}`}>
-            <div className="text-4xl opacity-20 text-gray-400">🎮</div>
+            <div className="text-4xl opacity-20 text-[#00CED1]">🎮</div>
           </div>
         </div>
         
@@ -115,12 +128,15 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
         <div className="flex-1 overflow-hidden min-w-0">
           <h4 
             ref={nameRef}
-            className={`text-white font-bold whitespace-nowrap text-base sm:text-lg mb-1 ${
+            className={`font-bold whitespace-nowrap text-base sm:text-lg mb-1 transition-colors duration-200 ${
               shouldScroll ? 'animate-scroll-text' : ''
             }`}
             style={shouldScroll ? {
               display: 'inline-block',
-            } : {}}
+              color: '#FFFFFF'
+            } : {
+              color: '#FFFFFF'
+            }}
           >
             {shouldScroll ? (
               <>
@@ -133,7 +149,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             )}
           </h4>
           {item.subtitle && (
-            <p className="text-xs sm:text-sm text-gray-300">
+            <p className="text-xs sm:text-sm transition-colors duration-200" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               {item.subtitle}
             </p>
           )}
@@ -143,14 +159,14 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
       {/* Item Selection Modal */}
       {showCustomization && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCustomization(false)}>
-          <div className="flex flex-col rounded-2xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden" style={{ background: '#E74694' }} onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col rounded-2xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden" style={{ background: '#0A0A0A', border: '1px solid rgba(0, 206, 209, 0.3)' }} onClick={(e) => e.stopPropagation()}>
             <div 
               className="flex-shrink-0 p-6 flex items-center justify-between rounded-t-2xl" 
               style={{ 
-                background: '#E74694', 
+                background: '#0A0A0A', 
                 zIndex: 20,
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                borderBottom: '2px solid rgba(255, 255, 255, 0.2)'
+                borderBottom: '2px solid rgba(0, 206, 209, 0.2)'
               }}
             >
               <div>
@@ -173,7 +189,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             <div 
               className="flex-1 overflow-y-auto min-h-0 relative" 
               style={{ 
-                background: '#E74694',
+                background: '#0A0A0A',
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
               }}
@@ -183,7 +199,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                 className="sticky top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
                   height: '32px',
-                  background: 'linear-gradient(to bottom, #E74694 0%, rgba(231, 70, 148, 0.98) 20%, rgba(231, 70, 148, 0.7) 50%, rgba(231, 70, 148, 0.2) 80%, transparent 100%)',
+                  background: 'linear-gradient(to bottom, #0A0A0A 0%, rgba(10, 10, 10, 0.98) 20%, rgba(10, 10, 10, 0.7) 50%, rgba(10, 10, 10, 0.2) 80%, transparent 100%)',
                   marginBottom: '-32px'
                 }}
               />
@@ -248,30 +264,30 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                                   <button
                                     key={variation.id}
                                     onClick={() => handleItemSelect(variation)}
-                                    className="bg-white rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover"
+                                    className="bg-[#0A0A0A] border border-[#00CED1]/30 rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover"
                                     style={{
                                       boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                                     }}
                                   >
                                     <div className="flex flex-col">
-                                      <div className="font-semibold text-gray-900 text-sm mb-1">
+                                      <div className="font-semibold text-white text-sm mb-1">
                                         {variation.name}
                                       </div>
                                       {variation.description && (
-                                        <div className="text-xs text-gray-600 mb-2 line-clamp-2">
+                                        <div className="text-xs text-[#00CED1] mb-2 line-clamp-2">
                                           {variation.description}
                                         </div>
                                       )}
                                       <div className="mt-auto">
-                                        <div className="text-base font-bold text-gray-900">
+                                        <div className="text-base font-bold text-white">
                                           ₱{discountedPrice.toFixed(2)}
                                         </div>
                                         {isDiscounted && (
                                           <div className="flex items-center gap-2 mt-1">
-                                            <div className="text-xs text-gray-500 line-through">
+                                            <div className="text-xs text-[#00CED1]/70 line-through">
                                               ₱{originalPrice.toFixed(2)}
                                             </div>
-                                            <div className="text-xs text-gray-900 font-semibold">
+                                            <div className="text-xs text-[#E03090] font-semibold">
                                               -{item.discountPercentage}%
                                             </div>
                                           </div>
@@ -293,7 +309,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                     );
                   })()
                 ) : (
-                  <div className="text-center py-8 text-white/80">
+                  <div className="text-center py-8 text-[#00CED1]/80">
                     No currency packages available
                   </div>
                 )}

@@ -165,7 +165,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
             <div className="flex items-center mb-3 md:mb-4">
               <h3 className="text-3xl font-medium text-cafe-text">Search Results</h3>
             </div>
-            <p className="text-gray-500">No games found matching "{searchQuery}"</p>
+            <p className="text-[#00CED1]/70">No games found matching "{searchQuery}"</p>
           </section>
         </main>
       );
@@ -178,7 +178,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
             <h3 className="text-3xl font-medium text-cafe-text">
               Search Results for "{searchQuery}"
             </h3>
-            <span className="ml-4 text-sm text-gray-500">({menuItems.length} {menuItems.length === 1 ? 'game' : 'games'})</span>
+            <span className="ml-4 text-sm text-[#00CED1]/70">({menuItems.length} {menuItems.length === 1 ? 'game' : 'games'})</span>
           </div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
@@ -200,7 +200,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
             <div className="flex items-center mb-3 md:mb-4">
               <h3 className="text-3xl font-medium text-cafe-text">Popular</h3>
             </div>
-            <p className="text-gray-500">No popular items available at the moment.</p>
+            <p className="text-[#00CED1]/70">No popular items available at the moment.</p>
           </section>
         </main>
       );
