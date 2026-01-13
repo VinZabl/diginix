@@ -19,12 +19,23 @@ function MainApp() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
 
-  // Update document title with site name
+  // Update document title and favicon with site name and logo
   React.useEffect(() => {
     if (siteSettings?.site_name) {
       document.title = siteSettings.site_name;
     }
-  }, [siteSettings?.site_name]);
+    
+    // Update favicon dynamically
+    if (siteSettings?.site_logo) {
+      const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      const shortcutIcon = document.querySelector("link[rel='shortcut icon']") as HTMLLinkElement;
+      const appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+      
+      if (favicon) favicon.href = siteSettings.site_logo;
+      if (shortcutIcon) shortcutIcon.href = siteSettings.site_logo;
+      if (appleIcon) appleIcon.href = siteSettings.site_logo;
+    }
+  }, [siteSettings?.site_name, siteSettings?.site_logo]);
 
   const handleViewChange = (view: 'menu' | 'cart' | 'checkout') => {
     setCurrentView(view);

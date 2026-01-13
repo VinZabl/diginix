@@ -275,7 +275,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
       customFieldsSection = `🎮 IGN: ${customFieldValues['default_ign'] || ''}`;
     }
 
-    const siteName = siteSettings?.site_name || 'Kitty Galore Game Credits';
+    const siteName = siteSettings?.site_name || 'Game Credits Store';
     const orderDetails = `
 🛒 ${siteName} ORDER
 
