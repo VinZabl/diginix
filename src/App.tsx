@@ -14,7 +14,7 @@ import { useSiteSettings } from './hooks/useSiteSettings';
 function MainApp() {
   const cart = useCart();
   const { menuItems } = useMenu();
-  const { siteSettings } = useSiteSettings();
+  const { siteSettings, loading } = useSiteSettings();
   const [currentView, setCurrentView] = React.useState<'menu' | 'cart' | 'checkout'>('menu');
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
