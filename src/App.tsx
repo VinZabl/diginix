@@ -25,16 +25,54 @@ function MainApp() {
       document.title = siteSettings.site_name;
     }
     
-    // Update favicon dynamically
-    if (siteSettings?.site_logo) {
-      const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-      const shortcutIcon = document.querySelector("link[rel='shortcut icon']") as HTMLLinkElement;
-      const appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+    // Update favicon dynamically with cache busting
+    const logoPath = siteSettings?.site_logo || '/logo.png';
+    const timestamp = new Date().getTime(); // Cache busting
+    const faviconPath = logoPath.startsWith('http') ? logoPath : `${logoPath}?v=${timestamp}`;
+    
+    // Function to update favicon
+    const updateFavicon = (path: string) => {
+      // Remove existing favicon links (except the ones we're about to add)
+      const existingIcons = document.querySelectorAll("link[rel*='icon']");
+      existingIcons.forEach(icon => {
+        const id = icon.getAttribute('id');
+        if (id !== 'favicon' && id !== 'shortcut-icon' && id !== 'apple-icon') {
+          icon.remove();
+        }
+      });
       
-      if (favicon) favicon.href = siteSettings.site_logo;
-      if (shortcutIcon) shortcutIcon.href = siteSettings.site_logo;
-      if (appleIcon) appleIcon.href = siteSettings.site_logo;
-    }
+      // Update or create favicon links
+      let favicon = document.querySelector("link#favicon") as HTMLLinkElement;
+      if (!favicon) {
+        favicon = document.createElement('link');
+        favicon.id = 'favicon';
+        favicon.rel = 'icon';
+        favicon.type = 'image/png';
+        document.head.appendChild(favicon);
+      }
+      favicon.href = path;
+      
+      let shortcutIcon = document.querySelector("link#shortcut-icon") as HTMLLinkElement;
+      if (!shortcutIcon) {
+        shortcutIcon = document.createElement('link');
+        shortcutIcon.id = 'shortcut-icon';
+        shortcutIcon.rel = 'shortcut icon';
+        shortcutIcon.type = 'image/png';
+        document.head.appendChild(shortcutIcon);
+      }
+      shortcutIcon.href = path;
+      
+      let appleIcon = document.querySelector("link#apple-icon") as HTMLLinkElement;
+      if (!appleIcon) {
+        appleIcon = document.createElement('link');
+        appleIcon.id = 'apple-icon';
+        appleIcon.rel = 'apple-touch-icon';
+        document.head.appendChild(appleIcon);
+      }
+      appleIcon.href = path;
+    };
+    
+    updateFavicon(faviconPath);
   }, [siteSettings?.site_name, siteSettings?.site_logo]);
 
   const handleViewChange = (view: 'menu' | 'cart' | 'checkout') => {
