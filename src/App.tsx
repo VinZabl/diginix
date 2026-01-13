@@ -19,10 +19,13 @@ function MainApp() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
 
-  // Update document title and favicon with site name and logo
+  // Update document title immediately when site settings load
   React.useEffect(() => {
     if (siteSettings?.site_name) {
       document.title = siteSettings.site_name;
+    } else if (!siteSettings && !loading) {
+      // If settings failed to load, use a generic title
+      document.title = 'Game Credits Store';
     }
     
     // Update favicon dynamically with cache busting

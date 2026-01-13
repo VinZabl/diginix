@@ -9,7 +9,32 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClick }) => {
-  const { siteSettings } = useSiteSettings();
+  const { siteSettings, loading } = useSiteSettings();
+
+  // Don't render until site settings are loaded to avoid showing fallback text
+  if (loading || !siteSettings) {
+    return (
+      <header className="sticky top-0 z-50 shadow-sm" style={{ 
+        border: 'none',
+        background: '#0A0A0A',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0, 206, 209, 0.2)'
+      }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3">
+          <div className="flex items-center justify-between min-h-12 md:min-h-16">
+            <div className="flex items-center gap-3">
+              <div className="h-10 sm:h-12 md:h-16 w-10 sm:w-12 md:w-16 bg-gray-800 rounded animate-pulse" />
+              <div className="h-6 w-32 bg-gray-800 rounded animate-pulse" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-10 w-10 bg-gray-800 rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 shadow-sm" style={{ 
